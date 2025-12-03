@@ -513,9 +513,9 @@ label.chip:has(> input[type="text"]) > input[type="text"] {
               <label class="chip"><input type="checkbox" name="q5" value="WEB予約が便利">WEB予約が便利</label>
               <label class="chip"><input type="checkbox" name="q5" value="WEB問診が便利">WEB問診が便利</label>
               <label class="chip"><input type="checkbox" name="q5" value="診断書発行が円滑">診断書発行が円滑</label>
-              <label class="chip"><input type="checkbox" name="q5" value="薬の処方">薬の処方</label>
-              <label class="chip"><input type="checkbox" name="q5" value="キャッシュレス決済">キャッシュレス決済</label>
-              <label class="chip"><input type="checkbox" name="q5" value="武蔵小杉駅近く">武蔵小杉駅近く</label>
+              <label class="chip"><input type="checkbox" name="q5" value="薬を貰えた">薬を貰えた</label>
+              <label class="chip"><input type="checkbox" name="q5" value="Cashless決済が便利">Cashless決済が便利</label>
+              <label class="chip"><input type="checkbox" name="q5" value="駅近くで便利">駅近くで便利</label>
               <label class="chip"><input type="checkbox" name="q5" value="その他">その他</label>
             </div>
             <div class="group" id="q5_other_wrap" style="display:none; margin-top:8px;">
@@ -672,7 +672,7 @@ function filterPositives(items) {
   const positives = new Set([
     "よく聞いてくれた","待ち時間が短い",
     "WEB予約が便利","WEB問診が便利","診断書発行が円滑",
-    "薬の処方","キャッシュレス決済","武蔵小杉駅近く",
+    "薬を貰えた","Cashless決済が便利","駅近くで便利",
     // 旧表記（後方互換）
     "話しやすかった","話しを良く聞いてくれた","説明が丁寧だった","待ち時間が短かった",
     "WEB予約が便利だった","WEB問診票が便利だった","診断書発行の対応がスムーズだった",
@@ -701,9 +701,9 @@ function enforceLength(text, ans) {
     "WEB予約が便利": "WEB予約による手続きが簡単で、都合に合わせて受診しやすかったです。",
     "WEB問診が便利": "WEB問診での事前入力で当日の流れがスムーズになりました。",
     "診断書発行が円滑": "診断書などの書類の手続きも滞りなく対応いただけました。",
-    "薬の処方": "必要に応じた処方の説明もあり、受診後の流れが明確になりました。",
-    "キャッシュレス決済": "キャッシュレス決済が使用でき、会計がスピーディーで手間がかかりませんでした。",
-    "武蔵小杉駅近く": "武蔵小杉駅が近いので、継続通院もしやすいと感じます。",
+    "薬を貰えた": "必要に応じた処方の説明もあり、受診後の流れが明確になりました。",
+    "Cashless決済が便利": "キャッシュレス決済が使用でき、会計がスピーディーで手間がかかりませんでした。",
+    "駅近くで便利": "武蔵小杉駅が近いので、継続通院もしやすいと感じます。",
     
   };
 
