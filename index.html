@@ -643,7 +643,12 @@ function getDoctorName(ans){
     ? `- 次の語句は**表記を変えず**、不自然にならない位置に各1回程度入れる（順序は入れ替えてよい）：${seoTerms.join("、")}`
     : "";
 
-  return `あなたは医療機関のアンケート回答を自然な日本語の口コミ文に整えるアシスタントです。\n- 事実ベースで誇張しない\n- 一人称で丁寧な口調\n- 2〜4段落で、全体はおよそ300-350字前後（改行は自然に）\n- 絵文字・機種依存文字は使わない\n- 構成は時系列（受診のきっかけ→探した経緯→選んだ理由→診察の様子→良かった点→総合コメント）\n- 一文目は「◯◯が続いたため◯◯を探し、${clinic}を受診しました。」の形で、必ずクリニック名「${clinic}」を含める\n- 「症状が出てから／発症から」など**発症起点の期間表現は書かない**（期間は必ず通院開始起点）\n- 医師の表記は：${doctor === "担当の先生" ? "氏名が不明なので「担当の先生」を用いる" : `本文中に一度は医師名「${doctor}」を明記する`}\n${periodPhrase ? `- 通院期間は次の文面を本文に必ず一度含める：「${periodPhrase}」` : ""}\n${seoRule}\n- 「良かった点」（q5）は不自然にならない範囲で反映する\n- 固有名詞は上記の${clinic}${doctor === "担当の先生" ? "" : `と${doctor}`}以外は原則出さない`;
+  // ★キャッシュレス選択時のルールを追加
+  const cashlessRule = (ans.q5 || []).includes("Cashless決済が便利")
+    ? "- 「Cashless決済が便利」が選択されている場合は、キャッシュレス決済が利用でき会計がスムーズであることに触れる一文を必ず入れる"
+    : "";
+
+  return `あなたは医療機関のアンケート回答を自然な日本語の口コミ文に整えるアシスタントです。\n- 事実ベースで誇張しない\n- 一人称で丁寧な口調\n- 2〜4段落で、全体はおよそ300-350字前後（改行は自然に）\n- 絵文字・機種依存文字は使わない\n- 構成は時系列（受診のきっかけ→探した経緯→選んだ理由→診察の様子→良かった点→総合コメント）\n- 一文目は「◯◯が続いたため◯◯を探し、${clinic}を受診しました。」の形で、必ずクリニック名「${clinic}」を含める\n- 「症状が出てから／発症から」など**発症起点の期間表現は書かない**（期間は必ず通院開始起点）\n- 医師の表記は：${doctor === "担当の先生" ? "氏名が不明なので「担当の先生」を用いる" : `本文中に一度は医師名「${doctor}」を明記する`}\n${periodPhrase ? `- 通院期間は次の文面を本文に必ず一度含める：「${periodPhrase}」` : ""}\n${seoRule}\n${cashlessRule}\n- 「良かった点」（q5）は不自然にならない範囲で反映する\n- 固有名詞は上記の${clinic}${doctor === "担当の先生" ? "" : `と${doctor}`}以外は原則出さない`;
 }
 
 
@@ -707,9 +712,20 @@ function enforceLength(text, ans) {
     
   };
 
-  const plainLen = t.replace(/\n/g, "").length;
+  // ★常に良かった点を反映する: 選択されたQ5の理由があればテキスト末尾に加える
+  if (ans) {
+    const reasons = (ans.q5 || []).filter(x => Object.prototype.hasOwnProperty.call(expandMap, x));
+    for (const r of reasons) {
+      const add = expandMap[r];
+      if (add && !t.includes(add)) {
+        t += (t.endsWith("。") ? "" : "。") + add;
+      }
+    }
+  }
 
-  // 300字を超えていたら、文末の「。」でなるべべくきれいに切る
+  let plainLen = t.replace(/\n/g, "").length;
+
+  // 長すぎる場合は150字あたりで切る
   if (plainLen > MAX) {
     let cut = t.replace(/\n/g, "");
     if (cut.length > MAX) cut = cut.slice(0, MAX);
@@ -719,16 +735,8 @@ function enforceLength(text, ans) {
     return t;
   }
 
-  // 100字未満なら自然にボリュームを足す
+  // 100字未満なら期間・クロージングを追加してボリュームを足す
   if (plainLen < MIN && ans) {
-    // Q5（良かった点）から追加
-    const reasons = (ans.q5 || []).filter(x => Object.prototype.hasOwnProperty.call(expandMap, x));
-    for (const r of reasons) {
-      if (t.replace(/\n/g, "").length >= MIN) break;
-      const add = expandMap[r];
-      if (add && !t.includes(add)) t += (t.endsWith("。") ? "" : "。") + add;
-    }
-
     // （任意）通院期間の一文が使えるなら追加
     if (typeof computePeriodPhrase === "function") {
       const period = computePeriodPhrase(ans);
@@ -805,11 +813,17 @@ function generateReviewLocally(ans) {
   lines.push(`診察では${doctor}が話をよく聞いてくださり、状態や今後の方針も分かりやすく説明してくださいました。`);
   if (goodLine) lines.push(goodLine);
   lines.push(extra || closing);
+
+  // ★キャッシュレスが選択されていた場合は専用文を追加する
+  const hasCashless = (ans.q5 || []).includes("Cashless決済が便利");
+  if (hasCashless) {
+    lines.push("キャッシュレス決済が利用でき、会計がスムーズで手間がかからない点も助かりました。");
+  }
+
   lines.push("同じようなお悩みの方にも勧めたいと思います。");
 
   return lines.join("\n");
 }
-
 
 
 async function generateReviewWithEndpoint(ans) {
